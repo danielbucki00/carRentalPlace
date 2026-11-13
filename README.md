@@ -34,4 +34,5 @@ CarRentalPlace to aplikacja internetowa służąca do wypożyczania samochodów 
 - Utwórz bazę danych w phpMyAdmin.
 - Zaimportuj plik SQL z bazą danych, jeśli jest dostępny.
 - Skonfiguruj połączenie PHP z bazą danych.
+
 [Otwórz projekt w przeglądarce](http://localhost/CarRentalPlace)
