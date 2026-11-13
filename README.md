@@ -1,4 +1,4 @@
-__**CarRentalPlace 🚗__**
+__#CarRentalPlace 🚗**
 
 **O projekcie**
 
@@ -89,7 +89,7 @@ Zaimportuj plik SQL z bazą danych, jeśli jest dostępny.
 
 Skonfiguruj połączenie PHP z bazą danych.
 
-[Otwórz projekt w przeglądarce] (http://localhost/CarRentalPlace)
+[Otwórz projekt w przeglądarce](http://localhost/CarRentalPlace)
 
 
 **Cel projektu**
