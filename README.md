@@ -26,3 +26,12 @@ CarRentalPlace to aplikacja internetowa służąca do wypożyczania samochodów 
 
 - Dodawanie nowych samochodów
 - Zarządzanie samochodami i rezerwacjami
+
+## Uruchomienie projektu
+- Zainstaluj XAMPP.
+- Uruchom Apache oraz MySQL.
+- Umieść folder projektu w katalogu htdocs.
+- Utwórz bazę danych w phpMyAdmin.
+- Zaimportuj plik SQL z bazą danych, jeśli jest dostępny.
+- Skonfiguruj połączenie PHP z bazą danych.
+[Otwórz projekt w przeglądarce](http://localhost/CarRentalPlace)
