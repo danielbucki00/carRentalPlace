@@ -1,4 +1,5 @@
 CarRentalPlace 🚗
+
 O projekcie
 CarRentalPlace to aplikacja internetowa służąca do wypożyczania samochodów przez internet. Użytkownicy mogą przeglądać dostępne pojazdy, sprawdzać ich ceny i rezerwować je na wybrany termin. Administrator zarządza samochodami oraz rezerwacjami.
 
