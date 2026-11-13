@@ -1,6 +1,6 @@
-CarRentalPlace 🚗
+__**CarRentalPlace 🚗__**
 
-O projekcie
+**O projekcie**
 
 CarRentalPlace to aplikacja internetowa służąca do wypożyczania samochodów 
 przez internet. Użytkownicy mogą przeglądać dostępne pojazdy, sprawdzać ich 
@@ -9,9 +9,14 @@ oraz rezerwacjami.
 
 
 
-Technologie
 
-Frontend: HTML, CSS, JavaScript, Taliwind
+**Technologie**
+
+Frontend: 
+-HTML,
+-CSS, 
+-JavaScript,
+-Taliwind
 
 Backend: PYTHON
 
@@ -21,52 +26,56 @@ Baza danych: MySQL
 
 
 
-Główne funkcje
-
-Użytkownik
-
-Rejestracja i logowanie.
-
-Przeglądanie dostępnych samochodów.
-
-Wyświetlanie informacji o samochodach i ich cenach.
-
-Wyszukiwanie samochodów po marce i modelu.
-
-Rezerwacja samochodu na wybrany termin.
-
-Podgląd i anulowanie własnych rezerwacji.
 
 
+**Główne funkcje**
 
-Administrator
+-Użytkownik
 
-Dodawanie nowych samochodów.
+-Rejestracja i logowanie.
 
-Edytowanie i usuwanie samochodów.
+-Przeglądanie dostępnych samochodów.
 
-Przeglądanie rezerwacji użytkowników.
+-Wyświetlanie informacji o samochodach i ich cenach.
 
-Akceptowanie i odrzucanie rezerwacji.
+-Wyszukiwanie samochodów po marce i modelu.
 
-Zarządzanie wypożyczeniami.
+-Rezerwacja samochodu na wybrany termin.
+
+-Podgląd i anulowanie własnych rezerwacji.
 
 
 
-Baza danych
+**Administrator**
+
+
+-Dodawanie nowych samochodów.
+
+-Edytowanie i usuwanie samochodów.
+
+-Przeglądanie rezerwacji użytkowników.
+
+-Akceptowanie i odrzucanie rezerwacji.
+
+-Zarządzanie wypożyczeniami.
+
+
+
+**Baza danych**
+
 
 Projekt będzie korzystał z bazy danych MySQL zawierającej podstawowe tabele:
 
+-users – dane użytkowników.
 
-users – dane użytkowników.
+-cars – informacje o samochodach.
 
-cars – informacje o samochodach.
-
-reservations – informacje o rezerwacjach.
-
+-reservations – informacje o rezerwacjach.
 
 
-Uruchomienie projektu
+
+**Uruchomienie projektu**
+
 
 Zainstaluj XAMPP.
 
@@ -80,10 +89,11 @@ Zaimportuj plik SQL z bazą danych, jeśli jest dostępny.
 
 Skonfiguruj połączenie PHP z bazą danych.
 
-Otwórz projekt w przeglądarce pod adresem http://localhost/CarRentalPlace.
+[Otwórz projekt w przeglądarce] (http://localhost/CarRentalPlace)
 
 
-Cel projektu
+**Cel projektu**
+
 
 Celem projektu jest stworzenie funkcjonalnej aplikacji internetowej, która ułatwi proces wypożyczania samochodów oraz zarządzanie rezerwacjami.
 
