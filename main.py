@@ -2,13 +2,16 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 import pymysql
 
 app = FastAPI()
 
+# sesja
+app.add_middleware(SessionMiddleware, secret_key="tajny_klucz_do_projektu_szkolnego")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# konfiguracja szablonów
 templates = Jinja2Templates(directory="templates")
 
 # łączenie z bazą danych
@@ -21,12 +24,11 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# główna strona 
+# filtrowanie samochodów po marce
 @app.get("/")
 def home(request: Request, make: str = "All makes"):
     connection = get_db()
     with connection.cursor() as cursor:
-        
         if make and make != "All makes":
             cursor.execute("SELECT * FROM cars WHERE brand = %s", (make,))
         else:
@@ -38,7 +40,6 @@ def home(request: Request, make: str = "All makes"):
         
     connection.close()
     
-    # przekazanie danych do htmla
     return templates.TemplateResponse("index.html", {
         "request": request,
         "cars": cars,
@@ -46,19 +47,64 @@ def home(request: Request, make: str = "All makes"):
         "selected_make": make
     })
 
-# logowanie 
+# rejestracja użytkownika
+@app.get("/register")
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.post("/register")
+def register_user(username: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO users (username, email, password, role)
+            VALUES (%s, %s, %s, 'user')
+        """, (username, email, password))
+        connection.commit()
+    connection.close()
+    return RedirectResponse(url="/login", status_code=303)
+
+# logowanie i wylogowywanie użytkownika
 @app.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@app.post("/login")
+def login_user(request: Request, email: str = Form(...), password: str = Form(...)):
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s", (email, password))
+        user = cursor.fetchone()
+    connection.close()
+    
+    if user:
+        # zapis danych
+        request.session["user_id"] = user["id"]
+        request.session["username"] = user["username"]
+        request.session["role"] = user["role"]
+        
+        if user["role"] == "admin":
+            return RedirectResponse(url="/admin", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
+    
+    return {"error": "Błędny e-mail lub hasło!"}
 
-#blokada podwójnych rezerwacji
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
+
+
+# rezerwacja samochodu i blokada podwójnych dat
 @app.post("/reserve/{car_id}")
-def reserve_car(car_id: int, start_date: str = Form(...), end_date: str = Form(...)):
+def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_date: str = Form(...)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+        
     connection = get_db()
     with connection.cursor() as cursor:
         
-        # 1. Sprawdzanie czy daty nie kolidują z inną rezerwacją tego auta
         cursor.execute("""
             SELECT * FROM reservations 
             WHERE car_id = %s 
@@ -70,18 +116,15 @@ def reserve_car(car_id: int, start_date: str = Form(...), end_date: str = Form(.
         
         if conflict:
             connection.close()
-            # Zwracamy prosty komunikat o konflikcie
-            return {"error": " Wybrany samochód jest już zajęty w tym terminie! Wróć i wybierz inne daty."}
-        
-        # 2. Jeśli termin jest wolny – zapisujemy rezerwację w bazie
-        user_id = 1  # Na razie na sztywno, potem zastąpimy zalogowanym użytkownikiem
+            return {"error": " Wybrany samochód jest już zarezerwowany w tym terminie! Wróć i wybierz inne daty."}
+
         cursor.execute("""
             INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
             VALUES (%s, %s, %s, %s, 'Confirmed')
         """, (user_id, car_id, start_date, end_date))
         
         connection.commit()
-    
     connection.close()
     
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/my-reservations", status_code=303)
+
