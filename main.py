@@ -152,21 +152,6 @@ def my_reservations(request: Request):
         "username": request.session.get("username")
     })
 
-# anulowanie rezerwacji
-@app.post("/cancel/{reservation_id}")
-def cancel_reservation(request: Request, reservation_id: int):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/login", status_code=303)
-        
-    connection = get_db()
-    with connection.cursor() as cursor:
-        cursor.execute("DELETE FROM reservations WHERE id = %s AND user_id = %s", (reservation_id, user_id))
-        connection.commit()
-    connection.close()
-    
-    return RedirectResponse(url="/my-reservations", status_code=303)
-
 # panel administratora
 @app.get("/admin")
 def admin_panel(request: Request):
@@ -202,3 +187,18 @@ def add_car(
     connection.close()
     
     return RedirectResponse(url="/admin", status_code=303)
+
+# anulowanie rezerwacji
+@app.post("/cancel/{reservation_id}")
+def cancel_reservation(request: Request, reservation_id: int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM reservations WHERE id = %s AND user_id = %s", (reservation_id, user_id))
+        connection.commit()
+    connection.close()
+    
+    return RedirectResponse(url="/my-reservations", status_code=303)
