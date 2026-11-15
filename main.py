@@ -128,3 +128,77 @@ def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_
     
     return RedirectResponse(url="/my-reservations", status_code=303)
 
+# panel użytkownika
+@app.get("/my-reservations")
+def my_reservations(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT reservations.*, cars.brand, cars.model, cars.price_per_day 
+            FROM reservations 
+            JOIN cars ON reservations.car_id = cars.id 
+            WHERE reservations.user_id = %s
+        """, (user_id,))
+        reservations = cursor.fetchall()
+    connection.close()
+    
+    return templates.TemplateResponse("my_reservations.html", {
+        "request": request, 
+        "reservations": reservations,
+        "username": request.session.get("username")
+    })
+
+# anulowanie rezerwacji
+@app.post("/cancel/{reservation_id}")
+def cancel_reservation(request: Request, reservation_id: int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM reservations WHERE id = %s AND user_id = %s", (reservation_id, user_id))
+        connection.commit()
+    connection.close()
+    
+    return RedirectResponse(url="/my-reservations", status_code=303)
+
+# panel administratora
+@app.get("/admin")
+def admin_panel(request: Request):
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+        
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM cars")
+        cars = cursor.fetchall()
+    connection.close()
+    
+    return templates.TemplateResponse("admin.html", {"request": request, "cars": cars})
+
+@app.post("/admin/add-car")
+def add_car(
+    request: Request, 
+    brand: str = Form(...), 
+    model: str = Form(...), 
+    category: str = Form(...), 
+    price_per_day: float = Form(...)
+):
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+        
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO cars (brand, model, category, price_per_day)
+            VALUES (%s, %s, %s, %s)
+        """, (brand, model, category, price_per_day))
+        connection.commit()
+    connection.close()
+    
+    return RedirectResponse(url="/admin", status_code=303)
