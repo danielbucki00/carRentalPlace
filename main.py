@@ -202,3 +202,31 @@ def cancel_reservation(request: Request, reservation_id: int):
     connection.close()
     
     return RedirectResponse(url="/my-reservations", status_code=303)
+
+@app.get("/cancel/{reservation_id}")
+def cancel_reservation_page(request: Request, reservation_id: int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+
+    connection = get_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT reservations.*, cars.brand, cars.model
+                FROM reservations
+                JOIN cars ON reservations.car_id = cars.id
+                WHERE reservations.id = %s
+                  AND reservations.user_id = %s
+            """, (reservation_id, user_id))
+            reservation = cursor.fetchone()
+    finally:
+        connection.close()
+
+    if not reservation:
+        return RedirectResponse(url="/my-reservations", status_code=303)
+
+    return templates.TemplateResponse("cancel_reservation.html", {
+        "request": request,
+        "reservation": reservation
+    })

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', path='css/logo.jpg') }}?v=2">
+    <title>Create account — CarRentalPlace</title>
+    <link href="{{ url_for('static', path='css/app.css') }}" rel="stylesheet">
+    <script>try { document.documentElement.dataset.theme = localStorage.getItem('car-rental-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') } catch (e) { document.documentElement.dataset.theme = 'light' }</script>
+    <style>
+        :root {
+            color-scheme: light;
+            --paper: #f3f6f3;
+            --ink: #142820;
+            --muted: #718079;
+            --card: #fff;
+            --field: #f7f9f7;
+            --line: #dce4df;
+            --green: #193e31;
+            --lime: #c4ff43
+        }
+
+        html[data-theme=dark] {
+            color-scheme: dark;
+            --paper: #0c1712;
+            --ink: #edf5ee;
+            --muted: #9bad9f;
+            --card: #14231b;
+            --field: #102018;
+            --line: #2b4032;
+            --green: #c4ff43
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        button,
+        input {
+            font: inherit
+        }
+
+        .wrap {
+            width: min(1250px, 90%);
+            margin: auto
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 24px 0
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        .mark {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            background: var(--lime);
+            color: #142820;
+            border-radius: 50%
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+            font-size: 14px
+        }
+
+        .theme-toggle {
+            padding: 10px 15px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--card);
+            color: var(--ink);
+            cursor: pointer;
+            font-size: 13px
+        }
+
+        .layout {
+            min-height: calc(100vh - 160px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 80px;
+            max-width: 1050px;
+            margin: auto;
+            padding: 50px 0
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: var(--muted)
+        }
+
+        h1 {
+            font-size: clamp(44px, 5vw, 66px);
+            letter-spacing: -3px;
+            line-height: 1.05;
+            margin: 24px 0
+        }
+
+        h1 span {
+            color: #548141
+        }
+
+        html[data-theme=dark] h1 span {
+            color: var(--lime)
+        }
+
+        .lead {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--muted);
+            max-width: 390px
+        }
+
+        .benefits {
+            display: grid;
+            gap: 20px;
+            margin: 35px 0
+        }
+
+        .benefit {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px
+        }
+
+        .check {
+            display: grid;
+            place-items: center;
+            background: var(--lime);
+            color: #142820;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%
+        }
+
+        .note {
+            border-left: 2px solid var(--line);
+            padding-left: 15px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--muted)
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            padding: 36px;
+            box-shadow: 0 24px 70px #1428200d
+        }
+
+        .tabs {
+            display: flex;
+            padding: 5px;
+            border-radius: 30px;
+            background: var(--paper);
+            margin-bottom: 28px
+        }
+
+        .tabs a {
+            width: 50%;
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 25px;
+            color: var(--muted)
+        }
+
+        .tabs .active {
+            background: var(--card);
+            box-shadow: 0 2px 5px #0001;
+            color: var(--ink)
+        }
+
+        h2 {
+            font-size: 25px;
+            letter-spacing: -.7px;
+            margin: 0 0 8px
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            margin: 0 0 24px
+        }
+
+        .field {
+            display: block;
+            margin-top: 18px;
+            font-size: 13px;
+            font-weight: 600
+        }
+
+        .input {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 9px;
+            background: var(--field);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            color: var(--ink);
+            outline: none
+        }
+
+        .input:focus {
+            border-color: #80b946;
+            box-shadow: 0 0 0 3px #a6dc5220
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+            font-weight: normal
+        }
+
+        .password-wrap {
+            position: relative
+        }
+
+        .password-wrap input {
+            padding-right: 65px
+        }
+
+        .show {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px
+        }
+
+        .hint {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--muted);
+            margin: 8px 0 0
+        }
+
+        .submit {
+            margin-top: 24px;
+            padding: 16px;
+            width: 100%;
+            background: var(--green);
+            color: white;
+            border: 0;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer
+        }
+
+        html[data-theme=dark] .submit {
+            color: #142820
+        }
+
+        .privacy {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.7;
+            text-align: center;
+            margin: 20px 0 0
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 20px
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            padding: 22px 0;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        @media(max-width:800px) {
+            nav {
+                display: none
+            }
+
+            .layout {
+                gap: 30px;
+                grid-template-columns: 1fr;
+                padding: 40px 0;
+                max-width: 500px
+            }
+
+            h1 {
+                font-size: 46px
+            }
+
+            .benefits,
+            .note {
+                display: none
+            }
+
+            .panel {
+                padding: 26px
+            }
+
+            .brand {
+                font-size: 17px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header><a class="brand" href="/"><span class="mark"><img src="{{ url_for('static', path='css/logo.jpg') }}?v=2"
+                        alt="" width="26" height="26"
+                        style="width:26px;height:26px;object-fit:contain;border-radius:50%;display:block"></span>CarRentalPlace</a>
+            <nav><a href="/#fleet">Fleet</a><a href="/#how-it-works">How it works</a></nav><button class="theme-toggle"
+                type="button" aria-label="Switch color theme">Dark theme</button>
+        </header>
+        <main class="layout">
+            <section>
+                <div class="eyebrow">A new account. A new adventure.</div>
+                <h1>Make room for<br><span>your next trip.</span></h1>
+                <p class="lead">Create your account, find your perfect car, and keep every reservation in one convenient
+                    place.</p>
+                <div class="benefits">
+                    <div class="benefit"><span class="check">✓</span>Reserve directly from the fleet</div>
+                    <div class="benefit"><span class="check">✓</span>Keep track of your bookings</div>
+                    <div class="benefit"><span class="check">✓</span>Cancel when your plans change</div>
+                </div>
+                <p class="note">Already have an account? <a href="/login"><strong>Sign in</strong></a> and pick up where
+                    you left off.</p>
+            </section>
+            <section>
+                <div class="panel">
+                    <div class="tabs"><a href="/login">Sign in</a><a class="active" href="/register"
+                            aria-current="page">Create account</a></div>
+                    <h2>Your journey starts here.</h2>
+                    <p class="subtitle">A few details, and you're ready to go.</p>
+                    <form action="/register" method="post" id="register-form">
+                        <label class="field" for="username">Username<input class="input" id="username" type="text"
+                                name="username" autocomplete="username" placeholder="Choose a username"
+                                required></label>
+                        <label class="field" for="email">Email address<input class="input" id="email" type="email"
+                                name="email" autocomplete="email" placeholder="alex@example.com" required></label>
+                        <label class="field" for="password">Password</label>
+                        <div class="password-wrap"><input class="input" id="password" type="password" name="password"
+                                autocomplete="new-password" placeholder="Create a password" minlength="8"
+                                aria-describedby="password-hint" required><button class="show" type="button"
+                                aria-controls="password" aria-pressed="false">Show</button></div>
+                        <p class="hint" id="password-hint">Use at least 8 characters.</p>
+                        <label class="field" for="confirm-password">Confirm password<input class="input"
+                                id="confirm-password" type="password" autocomplete="new-password"
+                                placeholder="Enter your password again" required></label>
+                        <button class="submit" type="submit">Create account →</button>
+                    </form>
+                    <p class="privacy">After registering, you'll be taken to the sign-in page.</p>
+                </div><a class="back" href="/#fleet">← Back to the fleet</a>
+            </section>
+        </main>
+    </div>
+    <footer>
+        <div class="wrap">CarRentalPlace · Your next drive, perfectly matched.</div>
+    </footer>
+    <script>
+        const themeButton = document.querySelector('.theme-toggle'); function themeLabel() { const dark = document.documentElement.dataset.theme === 'dark'; themeButton.textContent = dark ? 'Light theme' : 'Dark theme'; themeButton.setAttribute('aria-pressed', String(dark)) } themeLabel(); themeButton.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } themeLabel() });
+        const password = document.getElementById('password'), confirmation = document.getElementById('confirm-password'); function checkMatch() { confirmation.setCustomValidity(confirmation.value !== password.value ? 'Passwords do not match.' : '') } password.addEventListener('input', checkMatch); confirmation.addEventListener('input', checkMatch); document.getElementById('register-form').addEventListener('submit', event => { checkMatch(); if (!confirmation.checkValidity()) { event.preventDefault(); confirmation.reportValidity() } }); document.querySelector('.show').addEventListener('click', function () { const show = password.type === 'password'; password.type = show ? 'text' : 'password'; this.textContent = show ? 'Hide' : 'Show'; this.setAttribute('aria-pressed', String(show)) });
+    </script>
+</body>
+
+</html>

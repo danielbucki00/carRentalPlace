@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', path='css/logo.jpg') }}?v=2">
+    <title>My reservations — CarRentalPlace</title>
+    <link href="{{ url_for('static', path='css/app.css') }}" rel="stylesheet">
+    <script>try { document.documentElement.dataset.theme = localStorage.getItem('car-rental-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') } catch (e) { document.documentElement.dataset.theme = 'light' }</script>
+    <style>
+        :root {
+            color-scheme: light;
+            --paper: #f3f6f3;
+            --ink: #142820;
+            --muted: #718079;
+            --card: #fff;
+            --field: #edf2ee;
+            --line: #dce4df;
+            --lime: #c4ff43;
+            --button: #193e31;
+            --button-text: #fff;
+            --danger: #ae3434
+        }
+
+        html[data-theme=dark] {
+            color-scheme: dark;
+            --paper: #0c1712;
+            --ink: #edf5ee;
+            --muted: #a2b5a7;
+            --card: #14231b;
+            --field: #1b3023;
+            --line: #2b4032;
+            --button: #c4ff43;
+            --button-text: #142820;
+            --danger: #ffaaaa
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer
+        }
+
+        .wrap {
+            width: min(1250px, 90%);
+            margin: auto
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 24px 0
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        .mark {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            background: var(--lime);
+            color: #142820;
+            border-radius: 50%
+        }
+
+        nav {
+            display: flex;
+            gap: 26px;
+            font-size: 14px
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px
+        }
+
+        .theme-toggle {
+            padding: 10px 14px;
+            background: var(--card);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 25px
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--button);
+            color: var(--button-text);
+            padding: 14px 22px;
+            border: 0;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 13px
+        }
+
+        .page {
+            min-height: calc(100vh - 150px);
+            padding: 65px 0 75px
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: bold
+        }
+
+        .heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 25px;
+            margin-bottom: 35px
+        }
+
+        h1 {
+            font-size: clamp(38px, 5vw, 62px);
+            letter-spacing: -2.5px;
+            line-height: 1.08;
+            margin: 18px 0
+        }
+
+        p {
+            color: var(--muted);
+            line-height: 1.7
+        }
+
+        .heading p {
+            margin-bottom: 0
+        }
+
+        .count {
+            display: inline-block;
+            background: var(--field);
+            padding: 9px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 24px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px
+        }
+
+        .card {
+            padding: 28px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: 0 12px 35px #14282005
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 16px
+        }
+
+        .make {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted)
+        }
+
+        h2 {
+            font-size: 28px;
+            letter-spacing: -.8px;
+            margin: 9px 0 5px
+        }
+
+        .reference {
+            font-size: 11px;
+            color: var(--muted)
+        }
+
+        .status {
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: var(--field);
+            color: var(--ink);
+            white-space: nowrap
+        }
+
+        .status.confirmed {
+            background: #e6f3d9;
+            color: #335126
+        }
+
+        html[data-theme=dark] .status.confirmed {
+            background: #293e21;
+            color: #c4ff43
+        }
+
+        .dates {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+            padding: 20px 0;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line)
+        }
+
+        .label {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px
+        }
+
+        .date {
+            font-size: 16px;
+            font-weight: 600
+        }
+
+        .bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px
+        }
+
+        .rate {
+            font-size: 22px;
+            font-weight: bold
+        }
+
+        .rate small {
+            font-size: 12px;
+            font-weight: normal;
+            color: var(--muted)
+        }
+
+        .cancel {
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--danger);
+            padding: 11px 16px;
+            border-radius: 25px;
+            font-size: 12px
+        }
+
+        .cancel:hover {
+            border-color: var(--danger)
+        }
+
+        .empty {
+            text-align: center;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            padding: 65px 25px
+        }
+
+        .empty .mark {
+            margin: auto;
+            width: 56px;
+            height: 56px;
+            font-size: 24px
+        }
+
+        .empty h2 {
+            margin-top: 24px
+        }
+
+        .empty p {
+            max-width: 400px;
+            margin: 16px auto 25px
+        }
+
+        .notice {
+            font-size: 12px;
+            margin: 25px 0 0
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            padding: 22px 0;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        @media(max-width:800px) {
+            nav {
+                display: none
+            }
+
+            .page {
+                padding-top: 40px
+            }
+
+            .heading {
+                display: block
+            }
+
+            .heading>.button {
+                margin-top: 22px
+            }
+
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .brand {
+                font-size: 16px
+            }
+
+            .actions {
+                gap: 8px
+            }
+        }
+
+        @media(max-width:430px) {
+            header {
+                flex-wrap: wrap
+            }
+
+            .card {
+                padding: 22px
+            }
+
+            .top {
+                flex-wrap: wrap
+            }
+
+            .bottom {
+                align-items: start;
+                flex-direction: column
+            }
+
+            .dates {
+                gap: 10px
+            }
+
+            .date {
+                font-size: 14px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header><a class="brand" href="/"><span class="mark"><img src="{{ url_for('static', path='css/logo.jpg') }}?v=2"
+                        alt="" width="26" height="26"
+                        style="width:26px;height:26px;object-fit:contain;border-radius:50%;display:block"></span>CarRentalPlace</a>
+            <nav><a href="/#fleet">Fleet</a><a href="/my-reservations" aria-current="page">My reservations</a>{% if
+                request.session.get('role') == 'admin' %}<a href="/admin">Staff portal</a>{% endif %}</nav>
+            <div class="actions"><button class="theme-toggle" type="button" aria-label="Switch color theme">Dark
+                    theme</button><a href="/logout">Sign out</a></div>
+        </header>
+        <main class="page">
+            <div class="heading">
+                <div>
+                    <div class="eyebrow">Your trips, together</div>
+                    <h1>Your next chapter.<br>Your reservations.</h1>
+                    <p>Welcome back, {{ username }}. Here are your saved bookings.</p>
+                </div><a class="button" href="/#fleet">Find another car →</a>
+            </div>
+            {% if reservations %}
+            <div class="count">{{ reservations|length }} reservation{{ 's' if reservations|length != 1 else '' }}</div>
+            <div class="grid">
+                {% for reservation in reservations %}
+                <article class="card">
+                    <div class="top">
+                        <div>
+                            <div class="make">{{ reservation.brand }}</div>
+                            <h2>{{ reservation.model }}</h2>
+                            <div class="reference">Reservation #{{ reservation.id }}</div>
+                        </div><span class="status {% if reservation.status == 'Confirmed' %}confirmed{% endif %}">{{
+                            reservation.status }}</span>
+                    </div>
+                    <div class="dates">
+                        <div>
+                            <div class="label">Pick-up</div>
+                            <div class="date">{{ reservation.start_date }}</div>
+                        </div>
+                        <div>
+                            <div class="label">Return</div>
+                            <div class="date">{{ reservation.end_date }}</div>
+                        </div>
+                    </div>
+                    <div class="bottom">
+                        <div class="rate">{{ '%.2f'|format(reservation.price_per_day) }} <small>/ day</small></div>{% if
+                        reservation.status != 'Cancelled' %}<a class="cancel" href="/cancel/{{ reservation.id }}">Cancel
+                            reservation</a>{% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            <p class="notice">Daily rates are shown in your listed currency. Cancelling removes the booking from your
+                reservation list.</p>
+            {% else %}
+            <section class="empty">
+                <div class="mark">→</div>
+                <h2>A little room for adventure.</h2>
+                <p>You don't have any reservations yet. Explore the fleet and find a car for your next trip.</p><a
+                    class="button" href="/#fleet">Explore the fleet</a>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+    <footer>
+        <div class="wrap">CarRentalPlace · Your next drive, perfectly matched.</div>
+    </footer>
+    <script>
+        const themeButton = document.querySelector('.theme-toggle'); function themeLabel() { const dark = document.documentElement.dataset.theme === 'dark'; themeButton.textContent = dark ? 'Light theme' : 'Dark theme'; themeButton.setAttribute('aria-pressed', String(dark)) } themeLabel(); themeButton.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } themeLabel() }); document.querySelectorAll('.cancel-form').forEach(form => form.addEventListener('submit', event => { if (!confirm('Cancel this reservation? This will remove it from your bookings.')) event.preventDefault() }));
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancel reservation — CarRentalPlace</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', path='css/logo.jpg') }}?v=2">
+    <link href="{{ url_for('static', path='css/app.css') }}" rel="stylesheet">
+    <script>try { document.documentElement.dataset.theme = localStorage.getItem('car-rental-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') } catch (e) { document.documentElement.dataset.theme = 'light' }</script>
+    <style>
+        :root {
+            color-scheme: light;
+            --paper: #f3f6f3;
+            --ink: #142820;
+            --muted: #718079;
+            --card: #fff;
+            --line: #dce4df;
+            --lime: #c4ff43;
+            --field: #edf2ee;
+            --danger: #a12f36;
+            --danger-bg: #fff0ee
+        }
+
+        html[data-theme=dark] {
+            color-scheme: dark;
+            --paper: #0c1712;
+            --ink: #edf5ee;
+            --muted: #a2b5a7;
+            --card: #14231b;
+            --line: #2b4032;
+            --field: #1b3023;
+            --danger: #ffaaaa;
+            --danger-bg: #342021
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer
+        }
+
+        .wrap {
+            width: min(1250px, 90%);
+            margin: auto
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 24px 0
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        .mark {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            background: var(--lime);
+            color: #142820;
+            border-radius: 50%
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-size: 13px
+        }
+
+        .theme-toggle {
+            padding: 10px 14px;
+            border: 1px solid var(--line);
+            border-radius: 25px;
+            background: var(--card);
+            color: var(--ink)
+        }
+
+        main {
+            min-height: calc(100vh - 155px);
+            display: grid;
+            place-items: center;
+            padding: 60px 0
+        }
+
+        .panel {
+            width: min(580px, 100%);
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            padding: 38px;
+            box-shadow: 0 24px 65px #00000008
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: var(--danger);
+            background: var(--danger-bg);
+            font-size: 25px
+        }
+
+        .eyebrow {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 24px;
+            font-weight: bold
+        }
+
+        h1 {
+            font-size: 38px;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin: 16px 0
+        }
+
+        p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.8
+        }
+
+        .summary {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 20px;
+            background: var(--field);
+            margin: 25px 0
+        }
+
+        .label {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted)
+        }
+
+        h2 {
+            margin: 8px 0 18px;
+            font-size: 23px;
+            letter-spacing: -.5px
+        }
+
+        .dates {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px
+        }
+
+        .dates strong {
+            display: block;
+            font-size: 14px;
+            margin-top: 8px
+        }
+
+        .reference {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 18px
+        }
+
+        .warning {
+            font-size: 12px;
+            color: var(--danger);
+            padding-left: 14px;
+            border-left: 2px solid var(--danger);
+            margin-bottom: 25px
+        }
+
+        .buttons {
+            display: grid;
+            gap: 12px
+        }
+
+        .button {
+            display: block;
+            text-align: center;
+            border-radius: 25px;
+            padding: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            width: 100%;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--ink)
+        }
+
+        .confirm {
+            background: #a12f36;
+            border-color: #a12f36;
+            color: #fff
+        }
+
+        .keep {
+            background: var(--lime);
+            color: #142820;
+            border-color: var(--lime)
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            padding: 22px 0;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        @media(max-width:520px) {
+            .brand {
+                font-size: 16px
+            }
+
+            .panel {
+                padding: 26px
+            }
+
+            h1 {
+                font-size: 33px
+            }
+
+            .header-actions {
+                gap: 10px
+            }
+
+            header {
+                flex-wrap: wrap
+            }
+
+            main {
+                padding: 35px 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header><a class="brand" href="/"><span class="mark"><img src="{{ url_for('static', path='css/logo.jpg') }}?v=2"
+                        alt="" width="26" height="26"
+                        style="width:26px;height:26px;object-fit:contain;border-radius:50%;display:block"></span>CarRentalPlace</a>
+            <div class="header-actions"><button class="theme-toggle" type="button" aria-label="Switch color theme">Dark
+                    theme</button><a href="/logout">Sign out</a></div>
+        </header>
+        <main>
+            <section class="panel">
+                <div class="icon">!</div>
+                <div class="eyebrow">A change of plans</div>
+                <h1>Cancel this reservation?</h1>
+                <p>Before you go, check that this is the booking you want to remove.</p>
+                <div class="summary">
+                    <div class="label">Your vehicle</div>
+                    <h2>{{ reservation.brand }} {{ reservation.model }}</h2>
+                    <div class="dates">
+                        <div>
+                            <div class="label">Pick-up</div><strong>{{ reservation.start_date }}</strong>
+                        </div>
+                        <div>
+                            <div class="label">Return</div><strong>{{ reservation.end_date }}</strong>
+                        </div>
+                    </div>
+                    <div class="reference">Reservation #{{ reservation.id }} · {{ reservation.status }}</div>
+                </div>
+                <p class="warning">This removes the reservation from your account. To book again, you'll need to choose
+                    dates and submit a new reservation, subject to availability.</p>
+                <div class="buttons"><a class="button keep" href="/my-reservations">Keep my reservation</a>
+                    <form action="/cancel/{{ reservation.id }}" method="post"><button class="button confirm"
+                            type="submit">Yes, cancel reservation</button></form>
+                </div>
+            </section>
+        </main>
+    </div>
+    <footer>
+        <div class="wrap">CarRentalPlace · Your next drive, perfectly matched.</div>
+    </footer>
+    <script>const button = document.querySelector('.theme-toggle'); function label() { const dark = document.documentElement.dataset.theme === 'dark'; button.textContent = dark ? 'Light theme' : 'Dark theme'; button.setAttribute('aria-pressed', String(dark)) } label(); button.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } label() });</script>
+</body>
+
+</html>
