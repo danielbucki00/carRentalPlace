@@ -553,7 +553,7 @@
                                 <div class="make">{{ car.brand }}</div>
                                 <h3>{{ car.model }}</h3>
                             </div>
-                            <div class="price">{{ '%.2f'|format(car.price_per_day) }}<small>per day · your listed
+                            <div class="price">{{ '%.2f'|format(car.price_per_day) }}€<small>per day · your listed
                                     currency</small></div>
                         </div>
                         {% if request.session.get('user_id') %}

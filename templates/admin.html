@@ -386,7 +386,7 @@
                                     <td>#{{ car.id }}</td>
                                     <td><span class="make">{{ car.brand }}</span><strong>{{ car.model }}</strong></td>
                                     <td><span class="badge">{{ car.category }}</span></td>
-                                    <td class="rate">{{ '%.2f'|format(car.price_per_day) }} / day</td>
+                                    <td class="rate">{{ '%.2f'|format(car.price_per_day) }}€ / day</td>
                                 </tr>{% endfor %}</tbody>
                         </table>
                     </div>{% else %}<p class="empty">Your fleet is empty. Add your first car using the form.</p>{% endif

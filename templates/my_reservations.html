@@ -418,7 +418,7 @@
                         </div>
                     </div>
                     <div class="bottom">
-                        <div class="rate">{{ '%.2f'|format(reservation.price_per_day) }} <small>/ day</small></div>{% if
+                        <div class="rate">{{ '%.2f'|format(reservation.price_per_day) }}€ <small>/ day</small></div>{% if
                         reservation.status != 'Cancelled' %}<a class="cancel" href="/cancel/{{ reservation.id }}">Cancel
                             reservation</a>{% endif %}
                     </div>
