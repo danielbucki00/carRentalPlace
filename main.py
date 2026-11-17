@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, UploadFile, File  # <--- DODANO UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import pymysql
+import shutil  # <--- DODANO do obsługi plików
+import os      # <--- DODANO do obsługi ścieżek
 
 app = FastAPI()
 
@@ -20,7 +22,7 @@ def get_db():
         host='localhost',
         user='root',
         password='',
-        database='car_rental_db',
+        database='car_rental_place_db',
         cursorclass=pymysql.cursors.DictCursor
     )
 
@@ -138,7 +140,7 @@ def my_reservations(request: Request):
     connection = get_db()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT reservations.*, cars.brand, cars.model, cars.price_per_day 
+            SELECT reservations.*, cars.brand, cars.model, cars.price_per_day, cars.image 
             FROM reservations 
             JOIN cars ON reservations.car_id = cars.id 
             WHERE reservations.user_id = %s
@@ -172,17 +174,24 @@ def add_car(
     brand: str = Form(...), 
     model: str = Form(...), 
     category: str = Form(...), 
-    price_per_day: float = Form(...)
+    price_per_day: float = Form(...),
+    image: UploadFile = File(...)  # <--- TUTAJ DODANO OBSŁUGĘ ZDJĘCIA OD ADMINA
 ):
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/login", status_code=303)
         
+    # <--- ZAPIS PLIKU GRAFICZNEGO DO FOLDERU STATIC/
+    image_filename = image.filename
+    image_path = os.path.join("static", image_filename)
+    with open(image_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+        
     connection = get_db()
     with connection.cursor() as cursor:
         cursor.execute("""
-            INSERT INTO cars (brand, model, category, price_per_day)
-            VALUES (%s, %s, %s, %s)
-        """, (brand, model, category, price_per_day))
+            INSERT INTO cars (brand, model, category, price_per_day, image)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (brand, model, category, price_per_day, image_filename))
         connection.commit()
     connection.close()
     
