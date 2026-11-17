@@ -56,7 +56,3 @@ CarRentalPlace to aplikacja internetowa służąca do wypożyczania samochodów 
     uvicorn main:app --reload
     ```
 9. Otwórz aplikację w przeglądarce: http://127.0.0.1:8000
-
-
-
-[Otwórz projekt w przeglądarce](http://localhost/CarRentalPlace)
