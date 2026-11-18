@@ -300,10 +300,16 @@
         .photo {
             height: 245px;
             position: relative;
-            background: linear-gradient(135deg, #dbe5de, #b5c6bb);
-            display: grid;
-            place-items: center
+            overflow: hidden;
         }
+
+        .photo img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
 
         .photo svg {
             width: 70%;
@@ -488,10 +494,76 @@
                 height: 220px
             }
         }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.65);
+        }
+
+        .modal {
+            width: min(460px, 100%);
+            padding: 28px;
+            border: 1px solid #dce4df;
+            border-radius: 24px;
+            background: var(--paper);
+            color: var(--ink);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 21px;
+            font-weight: 700;
+        }
+
+        .modal-icon {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            border-radius: 50%;
+            background: #ffe3e3;
+            color: #9b2525;
+        }
+
+        .modal p {
+            margin: 18px 0 24px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .modal .button {
+            width: 100%;
+        }
     </style>
 </head>
 
 <body>
+    {% if request.query_params.get('error') %}
+    <div class="modal-backdrop" id="reservation-error" role="dialog" aria-modal="true"
+        aria-labelledby="reservation-error-title">
+        <div class="modal">
+            <div class="modal-title" id="reservation-error-title">
+                <span class="modal-icon">!</span>
+                Dates unavailable
+            </div>
+
+            <p>{{ request.query_params.get('error') }}</p>
+
+            <button class="button" type="button" id="close-reservation-error">
+                Choose different dates
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
     <section class="hero">
         <div class="wrap">
             <header>
@@ -537,16 +609,15 @@
             <div class="grid">
                 {% for car in cars %}
                 <article class="card">
-                    <div class="photo"><span class="category">{{ car.category }}</span><svg viewBox="0 0 300 140"
-                            fill="none" aria-label="Car illustration" role="img">
-                            <path d="m44 76 29-42h115l43 42 28 8v28H28V85l16-9Z" fill="currentColor" opacity=".22" />
-                            <path d="m44 76 29-42h115l43 42 28 8v28H28V85l16-9Z" stroke="currentColor"
-                                stroke-width="4" />
-                            <path d="M83 43 62 76h144l-29-33H83Zm46 1v31M32 92h28m165 0h27" stroke="currentColor"
-                                stroke-width="4" />
-                            <circle cx="75" cy="112" r="20" fill="#f3f6f3" stroke="currentColor" stroke-width="5" />
-                            <circle cx="216" cy="112" r="20" fill="#f3f6f3" stroke="currentColor" stroke-width="5" />
-                        </svg></div>
+                    <div class="photo">
+                        <span class="category">{{ car.category }}</span>
+
+                        {% if car.image %}
+                        <img src="{{ url_for('static', path=car.image) }}" alt="{{ car.brand }} {{ car.model }}">
+                        {% else %}
+                        <img src="{{ url_for('static', path='css/logo.jpg') }}" alt="CarRentalPlace">
+                        {% endif %}
+                    </div>
                     <div class="details">
                         <div class="car-title">
                             <div>
@@ -596,6 +667,16 @@
         const themeButton = document.querySelector('.theme-toggle'); function themeLabel() { const dark = document.documentElement.dataset.theme === 'dark'; themeButton.textContent = dark ? 'Light theme' : 'Dark theme'; themeButton.setAttribute('aria-pressed', String(dark)) } themeLabel(); themeButton.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } themeLabel() });
         const today = new Date(); const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         document.querySelectorAll('.booking').forEach(form => { const start = form.querySelector('[name=start_date]'), end = form.querySelector('[name=end_date]'); if (!start) return; start.min = localDate; end.min = localDate; start.addEventListener('change', () => { end.min = start.value || localDate; if (end.value && end.value < start.value) end.value = start.value; }); });
+        const errorPopup = document.getElementById("reservation-error");
+        const closeError = document.getElementById("close-reservation-error");
+
+        if (errorPopup && closeError) {
+            closeError.addEventListener("click", () => {
+                errorPopup.remove();
+                history.replaceState({}, "", "/#fleet");
+            });
+        }
+
     </script>
 </body>
 

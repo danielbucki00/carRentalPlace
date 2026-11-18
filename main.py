@@ -6,6 +6,8 @@ from starlette.middleware.sessions import SessionMiddleware
 import pymysql
 import shutil  # <--- DODANO do obsługi plików
 import os      # <--- DODANO do obsługi ścieżek
+from urllib.parse import quote
+
 
 app = FastAPI()
 
@@ -91,45 +93,63 @@ def login_user(request: Request, email: str = Form(...), password: str = Form(..
     
     return {"error": "Błędny e-mail lub hasło!"}
 
-@app.get("/logout")
-def logout(request: Request):
-    request.session.clear()
-    return RedirectResponse(url="/", status_code=303)
-
-
-# rezerwacja samochodu i blokada podwójnych dat
 @app.post("/reserve/{car_id}")
-def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_date: str = Form(...)):
+def reserve_car(
+    request: Request,
+    car_id: int,
+    start_date: str = Form(...),
+    end_date: str = Form(...)
+):
     user_id = request.session.get("user_id")
+
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
-        
+
+    if end_date < start_date:
+        return RedirectResponse(
+            url=f"/?error={quote('Return date must be after the pick-up date.')}#fleet",
+            status_code=303
+        )
+
     connection = get_db()
-    with connection.cursor() as cursor:
-        
-        cursor.execute("""
-            SELECT * FROM reservations 
-            WHERE car_id = %s 
-            AND status != 'Cancelled'
-            AND NOT (end_date < %s OR start_date > %s)
-        """, (car_id, start_date, end_date))
-        
-        conflict = cursor.fetchone()
-        
-        if conflict:
-            connection.close()
-            return {"error": " Wybrany samochód jest już zarezerwowany w tym terminie! Wróć i wybierz inne daty."}
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id FROM reservations
+                WHERE car_id = %s
+                  AND status != 'Cancelled'
+                  AND start_date <= %s
+                  AND end_date >= %s
+                LIMIT 1
+            """, (car_id, end_date, start_date))
 
-        cursor.execute("""
-            INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
-            VALUES (%s, %s, %s, %s, 'Confirmed')
-        """, (user_id, car_id, start_date, end_date))
-        
-        connection.commit()
-    connection.close()
-    
+            conflict = cursor.fetchone()
+
+            print("NEW BOOKING:", car_id, start_date, end_date)
+            print("CONFLICT FOUND:", conflict)
+
+            if conflict:
+                error = (
+                    "This car is already reserved for the selected dates. "
+                    "Please choose different dates."
+                )
+
+                return RedirectResponse(
+                    url=f"/?error={quote(error)}#fleet",
+                    status_code=303
+                )
+
+
+            cursor.execute("""
+                INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
+                VALUES (%s, %s, %s, %s, 'Confirmed')
+            """, (user_id, car_id, start_date, end_date))
+
+            connection.commit()
+    finally:
+        connection.close()
+
     return RedirectResponse(url="/my-reservations", status_code=303)
-
 # panel użytkownika
 @app.get("/my-reservations")
 def my_reservations(request: Request):
@@ -181,7 +201,7 @@ def add_car(
         return RedirectResponse(url="/login", status_code=303)
         
     # <--- ZAPIS PLIKU GRAFICZNEGO DO FOLDERU STATIC/
-    image_filename = image.filename
+    image_filename = os.path.basename(image.filename)
     image_path = os.path.join("static", image_filename)
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
