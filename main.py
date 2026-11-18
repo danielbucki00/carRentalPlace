@@ -1,13 +1,12 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File  # <--- DODANO UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import pymysql
-import shutil  # <--- DODANO do obsługi plików
-import os      # <--- DODANO do obsługi ścieżek
+import shutil
+import os
 from urllib.parse import quote
-
 
 app = FastAPI()
 
@@ -44,7 +43,8 @@ def home(request: Request, make: str = "All makes"):
         
     connection.close()
     
-    return templates.TemplateResponse("index.html", {
+    # POPRAWKA: request jako pierwszy argument
+    return templates.TemplateResponse(request, "index.html", {
         "request": request,
         "cars": cars,
         "brands": brands,
@@ -54,7 +54,7 @@ def home(request: Request, make: str = "All makes"):
 # rejestracja użytkownika
 @app.get("/register")
 def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse(request, "register.html", {"request": request})
 
 @app.post("/register")
 def register_user(username: str = Form(...), email: str = Form(...), password: str = Form(...)):
@@ -71,27 +71,38 @@ def register_user(username: str = Form(...), email: str = Form(...), password: s
 # logowanie i wylogowywanie użytkownika
 @app.get("/login")
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html", {"request": request})
 
 @app.post("/login")
 def login_user(request: Request, email: str = Form(...), password: str = Form(...)):
     connection = get_db()
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s", (email, password))
+        cursor.execute(
+            "SELECT * FROM users WHERE email = %s AND password = %s",
+            (email, password)
+        )
         user = cursor.fetchone()
+
     connection.close()
-    
+
     if user:
-        # zapis danych
         request.session["user_id"] = user["id"]
         request.session["username"] = user["username"]
         request.session["role"] = user["role"]
-        
+
         if user["role"] == "admin":
             return RedirectResponse(url="/admin", status_code=303)
+
         return RedirectResponse(url="/", status_code=303)
-    
+
     return {"error": "Błędny e-mail lub hasło!"}
+
+
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
+
 
 @app.post("/reserve/{car_id}")
 def reserve_car(
@@ -125,20 +136,15 @@ def reserve_car(
 
             conflict = cursor.fetchone()
 
-            print("NEW BOOKING:", car_id, start_date, end_date)
-            print("CONFLICT FOUND:", conflict)
-
             if conflict:
                 error = (
                     "This car is already reserved for the selected dates. "
                     "Please choose different dates."
                 )
-
                 return RedirectResponse(
                     url=f"/?error={quote(error)}#fleet",
                     status_code=303
                 )
-
 
             cursor.execute("""
                 INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
@@ -150,6 +156,7 @@ def reserve_car(
         connection.close()
 
     return RedirectResponse(url="/my-reservations", status_code=303)
+
 # panel użytkownika
 @app.get("/my-reservations")
 def my_reservations(request: Request):
@@ -168,7 +175,7 @@ def my_reservations(request: Request):
         reservations = cursor.fetchall()
     connection.close()
     
-    return templates.TemplateResponse("my_reservations.html", {
+    return templates.TemplateResponse(request, "my_reservations.html", {
         "request": request, 
         "reservations": reservations,
         "username": request.session.get("username")
@@ -186,7 +193,7 @@ def admin_panel(request: Request):
         cars = cursor.fetchall()
     connection.close()
     
-    return templates.TemplateResponse("admin.html", {"request": request, "cars": cars})
+    return templates.TemplateResponse(request, "admin.html", {"request": request, "cars": cars})
 
 @app.post("/admin/add-car")
 def add_car(
@@ -195,12 +202,11 @@ def add_car(
     model: str = Form(...), 
     category: str = Form(...), 
     price_per_day: float = Form(...),
-    image: UploadFile = File(...)  # <--- TUTAJ DODANO OBSŁUGĘ ZDJĘCIA OD ADMINA
+    image: UploadFile = File(...)
 ):
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/login", status_code=303)
         
-    # <--- ZAPIS PLIKU GRAFICZNEGO DO FOLDERU STATIC/
     image_filename = os.path.basename(image.filename)
     image_path = os.path.join("static", image_filename)
     with open(image_path, "wb") as buffer:
@@ -255,7 +261,7 @@ def cancel_reservation_page(request: Request, reservation_id: int):
     if not reservation:
         return RedirectResponse(url="/my-reservations", status_code=303)
 
-    return templates.TemplateResponse("cancel_reservation.html", {
+    return templates.TemplateResponse(request, "cancel_reservation.html", {
         "request": request,
         "reservation": reservation
     })
