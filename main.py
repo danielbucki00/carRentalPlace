@@ -6,6 +6,8 @@ from starlette.middleware.sessions import SessionMiddleware
 import pymysql
 import shutil
 import os
+from urllib.parse import quote
+from datetime import date  
 
 app = FastAPI()
 
@@ -15,6 +17,12 @@ app.add_middleware(SessionMiddleware, secret_key="tajny_klucz_do_projektu_szkoln
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+
+PROMO_CODES = {
+    "START10": 10,
+    "WEEKEND20": 20,
+    "SCHOOL15": 15,
+}
 
 # łączenie z bazą danych
 def get_db():
@@ -26,7 +34,7 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# filtrowanie samochodów po marce (z pominięciem aut w serwisie dla klientów)
+# filtrowanie samochodów po marce 
 @app.get("/")
 def home(request: Request, make: str = "All makes"):
     connection = get_db()
@@ -99,7 +107,13 @@ def logout(request: Request):
 
 # rezerwacja samochodu i blokada podwójnych dat
 @app.post("/reserve/{car_id}")
-def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_date: str = Form(...)):
+def reserve_car(
+    request: Request,
+    car_id: int,
+    start_date: str = Form(...),
+    end_date: str = Form(...),
+    promo_code: str = Form("")  # <--- KODY RABATOWE
+):
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
@@ -107,7 +121,7 @@ def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_
     connection = get_db()
     with connection.cursor() as cursor:
         # blokada rezerwacji dla samochodów w serwisie
-        cursor.execute("SELECT status FROM cars WHERE id = %s", (car_id,))
+        cursor.execute("SELECT status, price_per_day FROM cars WHERE id = %s", (car_id,))  # <--- KODY RABATOWE
         car = cursor.fetchone()
         if not car or car["status"] != "Available":
             connection.close()
@@ -126,10 +140,28 @@ def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_
             connection.close()
             return {"error": " Wybrany samochód jest już zarezerwowany w tym terminie! Wróć i wybierz inne daty."}
 
+        # kody rabatowe
+        d_start = date.fromisoformat(start_date)
+        d_end = date.fromisoformat(end_date)
+        days = max((d_end - d_start).days, 1)
+
+        normalized_code = promo_code.strip().upper()
+        discount_percent = PROMO_CODES.get(normalized_code, 0)
+        applied_code = normalized_code if discount_percent > 0 else None
+
+        base_total = float(car["price_per_day"]) * days
+        final_price = round(base_total * (1 - discount_percent / 100), 2)
+
         cursor.execute("""
-            INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
-            VALUES (%s, %s, %s, %s, 'Confirmed')
-        """, (user_id, car_id, start_date, end_date))
+            INSERT INTO reservations (
+                user_id, car_id, start_date, end_date, status,
+                promo_code, discount_percent, total_price
+            )
+            VALUES (%s, %s, %s, %s, 'Confirmed', %s, %s, %s)
+        """, (
+            user_id, car_id, start_date, end_date,
+            applied_code, discount_percent, final_price
+        ))
         
         connection.commit()
     connection.close()
