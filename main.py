@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File  # <--- DODANO UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import pymysql
-import shutil  # <--- DODANO do obsługi plików
-import os      # <--- DODANO do obsługi ścieżek
+import shutil
+import os
 
 app = FastAPI()
 
@@ -26,18 +26,18 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# filtrowanie samochodów po marce
+# filtrowanie samochodów po marce (z pominięciem aut w serwisie dla klientów)
 @app.get("/")
 def home(request: Request, make: str = "All makes"):
     connection = get_db()
     with connection.cursor() as cursor:
         if make and make != "All makes":
-            cursor.execute("SELECT * FROM cars WHERE brand = %s", (make,))
+            cursor.execute("SELECT * FROM cars WHERE brand = %s AND status = 'Available'", (make,))
         else:
-            cursor.execute("SELECT * FROM cars")
+            cursor.execute("SELECT * FROM cars WHERE status = 'Available'")
         cars = cursor.fetchall()
         
-        cursor.execute("SELECT DISTINCT brand FROM cars")
+        cursor.execute("SELECT DISTINCT brand FROM cars WHERE status = 'Available'")
         brands = [row['brand'] for row in cursor.fetchall()]
         
     connection.close()
@@ -106,7 +106,13 @@ def reserve_car(request: Request, car_id: int, start_date: str = Form(...), end_
         
     connection = get_db()
     with connection.cursor() as cursor:
-        
+        # blokada rezerwacji dla samochodów w serwisie
+        cursor.execute("SELECT status FROM cars WHERE id = %s", (car_id,))
+        car = cursor.fetchone()
+        if not car or car["status"] != "Available":
+            connection.close()
+            return {"error": "Ten samochód jest obecnie w serwisie i nie można go wypożyczyć."}
+
         cursor.execute("""
             SELECT * FROM reservations 
             WHERE car_id = %s 
@@ -175,12 +181,11 @@ def add_car(
     model: str = Form(...), 
     category: str = Form(...), 
     price_per_day: float = Form(...),
-    image: UploadFile = File(...)  # <--- TUTAJ DODANO OBSŁUGĘ ZDJĘCIA OD ADMINA
+    image: UploadFile = File(...) 
 ):
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/login", status_code=303)
         
-    # <--- ZAPIS PLIKU GRAFICZNEGO DO FOLDERU STATIC/
     image_filename = image.filename
     image_path = os.path.join("static", image_filename)
     with open(image_path, "wb") as buffer:
@@ -195,6 +200,25 @@ def add_car(
         connection.commit()
     connection.close()
     
+    return RedirectResponse(url="/admin", status_code=303)
+
+# available albo service
+@app.post("/admin/toggle-service/{car_id}")
+def toggle_car_service(request: Request, car_id: int):
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT status FROM cars WHERE id = %s", (car_id,))
+        car = cursor.fetchone()
+
+        if car:
+            new_status = "Service" if car["status"] == "Available" else "Available"
+            cursor.execute("UPDATE cars SET status = %s WHERE id = %s", (new_status, car_id))
+            connection.commit()
+    connection.close()
+
     return RedirectResponse(url="/admin", status_code=303)
 
 # anulowanie rezerwacji
