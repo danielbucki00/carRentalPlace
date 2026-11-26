@@ -8,70 +8,12 @@
     <title>CarRentalPlace — Find your drive</title>
     <script>try { document.documentElement.dataset.theme = localStorage.getItem('car-rental-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') } catch (e) { document.documentElement.dataset.theme = 'light' }</script>
     <style>
-        html[data-theme=dark] {
-            color-scheme: dark;
-            --paper: #0c1712;
-            --ink: #edf5ee;
-            --green: #284e3b
-        }
-
-        html[data-theme=dark] .filters,
-        html[data-theme=dark] .card,
-        html[data-theme=dark] .empty {
-            background: #14231b;
-            border-color: #2b4032
-        }
-
-        html[data-theme=dark] .filters select,
-        html[data-theme=dark] .dates input {
-            background: #102018;
-            color: #edf5ee;
-            border-color: #2b4032
-        }
-
-        html[data-theme=dark] .step,
-        html[data-theme=dark] footer,
-        html[data-theme=dark] .booking {
-            border-color: #2b4032
-        }
-
-        html[data-theme=dark] .heading p,
-        html[data-theme=dark] .step p,
-        html[data-theme=dark] footer,
-        html[data-theme=dark] .make,
-        html[data-theme=dark] .price small,
-        html[data-theme=dark] .dates label,
-        html[data-theme=dark] .filters label {
-            color: #a2b5a7
-        }
-
-        .theme-toggle {
-            padding: 10px 13px;
-            border: 1px solid #ffffff50;
-            border-radius: 25px;
-            background: #ffffff12;
-            color: white;
-            cursor: pointer;
-            font-size: 12px
-        }
-
-        html[data-theme=dark] .button.light {
-            background: white;
-            color: #142820
-        }
-
-        html[data-theme=dark] .button.lime {
-            background: var(--lime);
-            color: #142820
-        }
-    </style>
-    <link href="{{ url_for('static', path='css/app.css') }}" rel="stylesheet">
-    <style>
         :root {
             --ink: #142820;
             --green: #193e31;
             --lime: #c4ff43;
-            --paper: #f3f6f3
+            --paper: #f3f6f3;
+            --muted: #65776c
         }
 
         * {
@@ -157,6 +99,15 @@
             font-weight: 600
         }
 
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
         .button {
             display: inline-flex;
             justify-content: center;
@@ -178,6 +129,16 @@
         .button.lime {
             background: var(--lime);
             color: var(--ink)
+        }
+
+        .theme-toggle {
+            padding: 10px 13px;
+            border: 1px solid #ffffff50;
+            border-radius: 25px;
+            background: #ffffff12;
+            color: white;
+            cursor: pointer;
+            font-size: 12px
         }
 
         .intro {
@@ -300,16 +261,15 @@
         .photo {
             height: 245px;
             position: relative;
-            overflow: hidden;
+            overflow: hidden
         }
 
         .photo img {
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover
         }
-
 
         .photo svg {
             width: 70%;
@@ -322,6 +282,7 @@
             top: 17px;
             left: 17px;
             background: white;
+            color: #142820;
             padding: 8px 13px;
             border-radius: 20px;
             font-size: 10px;
@@ -398,6 +359,66 @@
             padding: 12px
         }
 
+        .promo-label {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 7px
+        }
+
+        .promo-row {
+            display: flex;
+            gap: 8px
+        }
+
+        .promo-row input {
+            width: 100%;
+            min-width: 0;
+            padding: 11px;
+            border: 1px solid #dce4df;
+            border-radius: 8px;
+            background: #f7f9f7;
+            color: var(--ink);
+            text-transform: uppercase
+        }
+
+        .booking .promo-row .button {
+            width: auto;
+            padding: 10px 16px;
+            flex-shrink: 0;
+            border-radius: 8px
+        }
+
+        .promo-message {
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 8px 0 12px;
+            min-height: 18px;
+            color: var(--muted)
+        }
+
+        .promo-message.invalid {
+            color: #b52e2e
+        }
+
+        .estimate {
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 12px;
+            background: var(--paper);
+            border-radius: 10px;
+            margin-bottom: 15px
+        }
+
+        .estimate strong {
+            font-size: 17px
+        }
+
+        .estimate small {
+            display: block;
+            color: var(--muted)
+        }
+
         .empty {
             padding: 35px;
             background: white;
@@ -425,6 +446,7 @@
             display: inline-grid;
             place-items: center;
             background: var(--lime);
+            color: #142820;
             width: 32px;
             height: 32px;
             border-radius: 50%
@@ -440,6 +462,107 @@
             border-top: 1px solid #dce4df;
             color: #65776c;
             font-size: 13px
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .65)
+        }
+
+        .modal {
+            width: min(460px, 100%);
+            padding: 28px;
+            border: 1px solid #dce4df;
+            border-radius: 24px;
+            background: var(--paper);
+            color: var(--ink);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .5)
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 21px;
+            font-weight: 700
+        }
+
+        .modal-icon {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            border-radius: 50%;
+            background: #ffe3e3;
+            color: #9b2525
+        }
+
+        .modal p {
+            margin: 18px 0 24px;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .modal .button {
+            width: 100%
+        }
+
+        html[data-theme=dark] {
+            color-scheme: dark;
+            --paper: #0c1712;
+            --ink: #edf5ee;
+            --green: #284e3b;
+            --muted: #a2b5a7
+        }
+
+        html[data-theme=dark] .filters,
+        html[data-theme=dark] .card,
+        html[data-theme=dark] .empty {
+            background: #14231b;
+            border-color: #2b4032
+        }
+
+        html[data-theme=dark] .filters select,
+        html[data-theme=dark] .dates input,
+        html[data-theme=dark] .promo-row input {
+            background: #102018;
+            color: #edf5ee;
+            border-color: #2b4032
+        }
+
+        html[data-theme=dark] .step,
+        html[data-theme=dark] footer,
+        html[data-theme=dark] .booking {
+            border-color: #2b4032
+        }
+
+        html[data-theme=dark] .heading p,
+        html[data-theme=dark] .step p,
+        html[data-theme=dark] footer,
+        html[data-theme=dark] .make,
+        html[data-theme=dark] .price small,
+        html[data-theme=dark] .dates label,
+        html[data-theme=dark] .filters label {
+            color: #a2b5a7
+        }
+
+        html[data-theme=dark] .button.light {
+            background: white;
+            color: #142820
+        }
+
+        html[data-theme=dark] .button.lime {
+            background: var(--lime);
+            color: #142820
+        }
+
+        html[data-theme=dark] .promo-message.invalid {
+            color: #ffabab
         }
 
         @media(max-width:800px) {
@@ -494,54 +617,6 @@
                 height: 220px
             }
         }
-
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: grid;
-            place-items: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.65);
-        }
-
-        .modal {
-            width: min(460px, 100%);
-            padding: 28px;
-            border: 1px solid #dce4df;
-            border-radius: 24px;
-            background: var(--paper);
-            color: var(--ink);
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 21px;
-            font-weight: 700;
-        }
-
-        .modal-icon {
-            display: grid;
-            width: 34px;
-            height: 34px;
-            place-items: center;
-            border-radius: 50%;
-            background: #ffe3e3;
-            color: #9b2525;
-        }
-
-        .modal p {
-            margin: 18px 0 24px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .modal .button {
-            width: 100%;
-        }
     </style>
 </head>
 
@@ -550,42 +625,30 @@
     <div class="modal-backdrop" id="reservation-error" role="dialog" aria-modal="true"
         aria-labelledby="reservation-error-title">
         <div class="modal">
-            <div class="modal-title" id="reservation-error-title">
-                <span class="modal-icon">!</span>
-                Dates unavailable
+            <div class="modal-title" id="reservation-error-title"><span class="modal-icon">!</span>Dates unavailable
             </div>
-
-            <p>{{ request.query_params.get('error') }}</p>
-
-            <button class="button" type="button" id="close-reservation-error">
-                Choose different dates
-            </button>
+            <p>{{ request.query_params.get('error') }}</p><button class="button" type="button"
+                id="close-reservation-error">Choose different dates</button>
         </div>
     </div>
     {% endif %}
-
     <section class="hero">
         <div class="wrap">
-            <header>
-                <a class="brand" href="/"><span class="mark"><img src="{{ url_for('static', path='css/logo.jpg') }}?v=2"
-                            alt="" width="26" height="26"
+            <header><a class="brand" href="/"><span class="mark"><img
+                            src="{{ url_for('static', path='css/logo.jpg') }}?v=2" alt="" width="26" height="26"
                             style="width:26px;height:26px;object-fit:contain;border-radius:50%;display:block"></span>CarRentalPlace</a>
                 <nav><a href="#fleet">Fleet</a><a href="#how-it-works">How it works</a>{% if request.session.get('role')
                     == 'admin' %}<a href="/admin">Staff portal</a>{% endif %}</nav>
-                <div class="header-actions"
-                    style="margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap">
-                    <button class="theme-toggle" type="button" aria-label="Switch color theme">Dark theme</button>
-                    {% if request.session.get('user_id') %}<a href="/my-reservations">My reservations</a><a
-                        class="button light" href="/logout">Sign out</a>{% else %}<a class="button light"
-                        href="/login">Sign in</a>{% endif %}
-                </div>
+                <div class="header-actions"><button class="theme-toggle" type="button"
+                        aria-label="Switch color theme">Dark theme</button>{% if request.session.get('user_id') %}<a
+                        href="/my-reservations">My reservations</a><a class="button light" href="/logout">Sign out</a>{%
+                    else %}<a class="button light" href="/login">Sign in</a>{% endif %}</div>
             </header>
             <div class="intro">
                 <div class="eyebrow pill">Premium mobility, made simple</div>
                 <h1>Your next drive,<br><span>perfectly matched.</span></h1>
                 <p>Thoughtfully selected cars, transparent daily rates, and a reservation process that takes minutes.
-                </p>
-                <a class="button lime" href="#fleet">Explore the fleet</a>
+                </p><a class="button lime" href="#fleet">Explore the fleet</a>
             </div>
         </div>
     </section>
@@ -598,26 +661,16 @@
                 </div>
                 <p>Explore our fleet and choose your dates. Availability is checked when you submit a reservation.</p>
             </div>
-            <form class="filters" action="/#fleet" method="get">
-                <label>MAKE<select name="make">
+            <form class="filters" action="/#fleet" method="get"><label>MAKE<select name="make">
                         <option value="All makes" {% if selected_make=='All makes' %}selected{% endif %}>All makes
                         </option>{% for brand in brands %}<option value="{{ brand }}" {% if selected_make==brand
                             %}selected{% endif %}>{{ brand }}</option>{% endfor %}
-                    </select></label>
-                <button class="button" type="submit">Search fleet</button>
-            </form>
-            <div class="grid">
-                {% for car in cars %}
+                    </select></label><button class="button" type="submit">Search fleet</button></form>
+            <div class="grid">{% for car in cars %}
                 <article class="card">
-                    <div class="photo">
-                        <span class="category">{{ car.category }}</span>
-
-                        {% if car.image %}
-                        <img src="{{ url_for('static', path=car.image) }}" alt="{{ car.brand }} {{ car.model }}">
-                        {% else %}
-                        <img src="{{ url_for('static', path='css/logo.jpg') }}" alt="CarRentalPlace">
-                        {% endif %}
-                    </div>
+                    <div class="photo"><span class="category">{{ car.category }}</span>{% if car.image %}<img
+                            src="{{ url_for('static', path=car.image) }}" alt="{{ car.brand }} {{ car.model }}">{% else
+                        %}<img src="{{ url_for('static', path='css/logo.jpg') }}" alt="CarRentalPlace">{% endif %}</div>
                     <div class="details">
                         <div class="car-title">
                             <div>
@@ -628,10 +681,19 @@
                                     currency</small></div>
                         </div>
                         {% if request.session.get('user_id') %}
-                        <form class="booking" action="/reserve/{{ car.id }}" method="post">
+                        <form class="booking" action="/reserve/{{ car.id }}" method="post"
+                            data-rate="{{ car.price_per_day }}">
                             <div class="dates"><label>Pick-up<input type="date" name="start_date"
                                         required></label><label>Return<input type="date" name="end_date"
                                         required></label></div>
+                            <label class="promo-label" for="promo-{{ car.id }}">Promo code (optional)</label>
+                            <div class="promo-row"><input id="promo-{{ car.id }}" type="text" name="promo_code"
+                                    placeholder="Enter promo code" autocomplete="off" maxlength="64"
+                                    aria-describedby="promo-message-{{ car.id }}"><button class="button apply-promo"
+                                    type="button">Apply</button></div>
+                            <p class="promo-message" id="promo-message-{{ car.id }}" role="status" aria-live="polite">
+                                Enter a code to preview your discount.</p>
+                            <div class="estimate" aria-live="polite" hidden></div>
                             <button class="button" type="submit">Reserve this car</button>
                         </form>
                         {% else %}<div class="booking"><a class="button" href="/login">Sign in to reserve</a></div>{%
@@ -664,19 +726,39 @@
         <div class="wrap">CarRentalPlace · Your next drive, perfectly matched.</div>
     </footer>
     <script>
-        const themeButton = document.querySelector('.theme-toggle'); function themeLabel() { const dark = document.documentElement.dataset.theme === 'dark'; themeButton.textContent = dark ? 'Light theme' : 'Dark theme'; themeButton.setAttribute('aria-pressed', String(dark)) } themeLabel(); themeButton.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } themeLabel() });
+        const themeButton = document.querySelector('.theme-toggle');
+        function themeLabel() { const dark = document.documentElement.dataset.theme === 'dark'; themeButton.textContent = dark ? 'Light theme' : 'Dark theme'; themeButton.setAttribute('aria-pressed', String(dark)) }
+        themeLabel(); themeButton.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('car-rental-theme', theme) } catch (e) { } themeLabel() });
+        // Preview mirrors the existing main.py codes; the server calculates the saved price.
+        const promoCodes = { START10: 10, WEEKEND20: 20, SCHOOL15: 15 };
         const today = new Date(); const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-        document.querySelectorAll('.booking').forEach(form => { const start = form.querySelector('[name=start_date]'), end = form.querySelector('[name=end_date]'); if (!start) return; start.min = localDate; end.min = localDate; start.addEventListener('change', () => { end.min = start.value || localDate; if (end.value && end.value < start.value) end.value = start.value; }); });
-        const errorPopup = document.getElementById("reservation-error");
-        const closeError = document.getElementById("close-reservation-error");
-
-        if (errorPopup && closeError) {
-            closeError.addEventListener("click", () => {
-                errorPopup.remove();
-                history.replaceState({}, "", "/#fleet");
-            });
-        }
-
+        document.querySelectorAll('form.booking').forEach(form => {
+            const start = form.querySelector('[name=start_date]'), end = form.querySelector('[name=end_date]'), input = form.querySelector('[name=promo_code]'), message = form.querySelector('.promo-message'), estimate = form.querySelector('.estimate');
+            let discount = 0;
+            start.min = localDate; end.min = localDate;
+            function updateEstimate() {
+                if (!start.value || !end.value || end.value < start.value) { estimate.hidden = true; return; }
+                const days = Math.max(Math.round((Date.parse(end.value + 'T00:00:00Z') - Date.parse(start.value + 'T00:00:00Z')) / 86400000), 1);
+                const base = Number(form.dataset.rate) * days, total = Math.round(base * (1 - discount / 100) * 100) / 100;
+                estimate.hidden = false; estimate.replaceChildren();
+                const strong = document.createElement('strong'); strong.textContent = 'Estimated total: ' + total.toFixed(2) + '€'; estimate.append(strong);
+                const details = document.createElement('small'); details.textContent = days + ' rental day' + (days === 1 ? '' : 's') + (discount ? ' · ' + discount + '% off · Save ' + (base - total).toFixed(2) + '€' : ''); estimate.append(details);
+                const note = document.createElement('small'); note.textContent = 'Final price and availability are confirmed when you reserve.'; estimate.append(note);
+            }
+            function applyPromo() {
+                const code = input.value.trim().toUpperCase(); input.value = code; discount = Object.prototype.hasOwnProperty.call(promoCodes, code) ? promoCodes[code] : 0;
+                const invalid = Boolean(code) && !discount; input.setCustomValidity(invalid ? 'Enter a valid promo code or clear this field.' : ''); input.setAttribute('aria-invalid', String(invalid)); message.classList.toggle('invalid', invalid);
+                message.textContent = invalid ? 'This promo code is not valid. Try another code or leave it blank.' : discount ? code + ' applied — ' + discount + '% off your rental.' : 'No promo code applied.';
+                updateEstimate(); return !invalid;
+            }
+            form.querySelector('.apply-promo').addEventListener('click', applyPromo);
+            input.addEventListener('input', () => { discount = 0; input.setCustomValidity(''); input.setAttribute('aria-invalid', 'false'); message.classList.remove('invalid'); message.textContent = 'Click Apply to preview your discount.'; updateEstimate() });
+            input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); applyPromo() } });
+            start.addEventListener('change', () => { end.min = start.value || localDate; if (end.value && end.value < start.value) end.value = start.value; updateEstimate() }); end.addEventListener('change', updateEstimate);
+            form.addEventListener('submit', event => { if (!applyPromo()) { event.preventDefault(); input.reportValidity() } });
+        });
+        const errorPopup = document.getElementById('reservation-error'), closeError = document.getElementById('close-reservation-error');
+        if (errorPopup && closeError) { closeError.addEventListener('click', () => { errorPopup.remove(); history.replaceState({}, '', '/#fleet') }) }
     </script>
 </body>
 
