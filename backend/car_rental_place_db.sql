@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Lis 14, 2026 at 04:24 PM
+-- Generation Time: Lis 17, 2026 at 11:26 PM
 -- Wersja serwera: 10.4.32-MariaDB
 -- Wersja PHP: 8.2.12
 
@@ -37,8 +37,21 @@ CREATE TABLE `cars` (
   `transmission` varchar(30) DEFAULT NULL,
   `fuel` varchar(30) DEFAULT NULL,
   `location` varchar(100) DEFAULT NULL,
-  `image_url` varchar(255) DEFAULT NULL
+  `image_url` varchar(255) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `cars`
+--
+
+INSERT INTO `cars` (`id`, `brand`, `model`, `category`, `price_per_day`, `seats`, `transmission`, `fuel`, `location`, `image_url`, `image`) VALUES
+(1, 'TOYOTA', 'Corolla', 'CITY', 58.00, NULL, NULL, NULL, NULL, NULL, 'toyota_corolla.jpg'),
+(2, 'VOLKSWAGEN', 'Golf', 'CITY', 62.00, NULL, NULL, NULL, NULL, NULL, 'vw_golf.jpg'),
+(3, 'HONDA', 'Civic', 'CITY', 64.00, NULL, NULL, NULL, NULL, NULL, 'honda_civic.jpg'),
+(4, '?KODA', 'Octavia', 'CITY', 68.00, NULL, NULL, NULL, NULL, NULL, 'skoda_octavia.jpg'),
+(5, 'HYUNDAI', 'Tucson', 'SUV', 82.00, NULL, NULL, NULL, NULL, NULL, 'hyundai_tucson.jpg'),
+(6, 'MERCEDES-BENZ', 'E-Class', 'LUXURY', 95.00, NULL, NULL, NULL, NULL, NULL, 'mercedes_e.jpg');
 
 -- --------------------------------------------------------
 
@@ -103,7 +116,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cars`
 --
 ALTER TABLE `cars`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `reservations`

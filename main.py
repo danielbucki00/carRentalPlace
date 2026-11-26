@@ -1,13 +1,13 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File  # <--- DODANO UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import pymysql
-import shutil  # <--- DODANO do obsługi plików
-import os      # <--- DODANO do obsługi ścieżek
+import shutil
+import os
 from urllib.parse import quote
-
+from datetime import date  
 
 app = FastAPI()
 
@@ -17,6 +17,12 @@ app.add_middleware(SessionMiddleware, secret_key="tajny_klucz_do_projektu_szkoln
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+
+PROMO_CODES = {
+    "START10": 10,
+    "WEEKEND20": 20,
+    "SCHOOL15": 15,
+}
 
 # łączenie z bazą danych
 def get_db():
@@ -28,18 +34,18 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# filtrowanie samochodów po marce
+# filtrowanie samochodów po marce 
 @app.get("/")
 def home(request: Request, make: str = "All makes"):
     connection = get_db()
     with connection.cursor() as cursor:
         if make and make != "All makes":
-            cursor.execute("SELECT * FROM cars WHERE brand = %s", (make,))
+            cursor.execute("SELECT * FROM cars WHERE brand = %s AND status = 'Available'", (make,))
         else:
-            cursor.execute("SELECT * FROM cars")
+            cursor.execute("SELECT * FROM cars WHERE status = 'Available'")
         cars = cursor.fetchall()
         
-        cursor.execute("SELECT DISTINCT brand FROM cars")
+        cursor.execute("SELECT DISTINCT brand FROM cars WHERE status = 'Available'")
         brands = [row['brand'] for row in cursor.fetchall()]
         
     connection.close()
@@ -93,63 +99,75 @@ def login_user(request: Request, email: str = Form(...), password: str = Form(..
     
     return {"error": "Błędny e-mail lub hasło!"}
 
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
+
+
+# rezerwacja samochodu i blokada podwójnych dat
 @app.post("/reserve/{car_id}")
 def reserve_car(
     request: Request,
     car_id: int,
     start_date: str = Form(...),
-    end_date: str = Form(...)
+    end_date: str = Form(...),
+    promo_code: str = Form("")  # <--- KODY RABATOWE
 ):
     user_id = request.session.get("user_id")
-
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
-
-    if end_date < start_date:
-        return RedirectResponse(
-            url=f"/?error={quote('Return date must be after the pick-up date.')}#fleet",
-            status_code=303
-        )
-
+        
     connection = get_db()
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT id FROM reservations
-                WHERE car_id = %s
-                  AND status != 'Cancelled'
-                  AND start_date <= %s
-                  AND end_date >= %s
-                LIMIT 1
-            """, (car_id, end_date, start_date))
+    with connection.cursor() as cursor:
+        # blokada rezerwacji dla samochodów w serwisie
+        cursor.execute("SELECT status, price_per_day FROM cars WHERE id = %s", (car_id,))  # <--- KODY RABATOWE
+        car = cursor.fetchone()
+        if not car or car["status"] != "Available":
+            connection.close()
+            return {"error": "Ten samochód jest obecnie w serwisie i nie można go wypożyczyć."}
 
-            conflict = cursor.fetchone()
+        cursor.execute("""
+            SELECT * FROM reservations 
+            WHERE car_id = %s 
+            AND status != 'Cancelled'
+            AND NOT (end_date < %s OR start_date > %s)
+        """, (car_id, start_date, end_date))
+        
+        conflict = cursor.fetchone()
+        
+        if conflict:
+            connection.close()
+            return {"error": " Wybrany samochód jest już zarezerwowany w tym terminie! Wróć i wybierz inne daty."}
 
-            print("NEW BOOKING:", car_id, start_date, end_date)
-            print("CONFLICT FOUND:", conflict)
+        # kody rabatowe
+        d_start = date.fromisoformat(start_date)
+        d_end = date.fromisoformat(end_date)
+        days = max((d_end - d_start).days, 1)
 
-            if conflict:
-                error = (
-                    "This car is already reserved for the selected dates. "
-                    "Please choose different dates."
-                )
+        normalized_code = promo_code.strip().upper()
+        discount_percent = PROMO_CODES.get(normalized_code, 0)
+        applied_code = normalized_code if discount_percent > 0 else None
 
-                return RedirectResponse(
-                    url=f"/?error={quote(error)}#fleet",
-                    status_code=303
-                )
+        base_total = float(car["price_per_day"]) * days
+        final_price = round(base_total * (1 - discount_percent / 100), 2)
 
-
-            cursor.execute("""
-                INSERT INTO reservations (user_id, car_id, start_date, end_date, status)
-                VALUES (%s, %s, %s, %s, 'Confirmed')
-            """, (user_id, car_id, start_date, end_date))
-
-            connection.commit()
-    finally:
-        connection.close()
-
+        cursor.execute("""
+            INSERT INTO reservations (
+                user_id, car_id, start_date, end_date, status,
+                promo_code, discount_percent, total_price
+            )
+            VALUES (%s, %s, %s, %s, 'Confirmed', %s, %s, %s)
+        """, (
+            user_id, car_id, start_date, end_date,
+            applied_code, discount_percent, final_price
+        ))
+        
+        connection.commit()
+    connection.close()
+    
     return RedirectResponse(url="/my-reservations", status_code=303)
+
 # panel użytkownika
 @app.get("/my-reservations")
 def my_reservations(request: Request):
@@ -195,13 +213,12 @@ def add_car(
     model: str = Form(...), 
     category: str = Form(...), 
     price_per_day: float = Form(...),
-    image: UploadFile = File(...)  # <--- TUTAJ DODANO OBSŁUGĘ ZDJĘCIA OD ADMINA
+    image: UploadFile = File(...) 
 ):
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/login", status_code=303)
         
-    # <--- ZAPIS PLIKU GRAFICZNEGO DO FOLDERU STATIC/
-    image_filename = os.path.basename(image.filename)
+    image_filename = image.filename
     image_path = os.path.join("static", image_filename)
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
@@ -215,6 +232,25 @@ def add_car(
         connection.commit()
     connection.close()
     
+    return RedirectResponse(url="/admin", status_code=303)
+
+# available albo service
+@app.post("/admin/toggle-service/{car_id}")
+def toggle_car_service(request: Request, car_id: int):
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+
+    connection = get_db()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT status FROM cars WHERE id = %s", (car_id,))
+        car = cursor.fetchone()
+
+        if car:
+            new_status = "Service" if car["status"] == "Available" else "Available"
+            cursor.execute("UPDATE cars SET status = %s WHERE id = %s", (new_status, car_id))
+            connection.commit()
+    connection.close()
+
     return RedirectResponse(url="/admin", status_code=303)
 
 # anulowanie rezerwacji
